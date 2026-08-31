@@ -41,7 +41,8 @@ The project was created for authorized classroom security training.
 ├── peer-review.md
 ├── scanner-review.md
 └── README.md
-└── README.md
+```
+
 ---
 
 ## 1. Vulnerability Detected
@@ -55,6 +56,8 @@ The vulnerable fixture contains:
 ```javascript
 const term = req.query.q;
 const query = `SELECT id, name FROM products WHERE name LIKE '%${term}%'`;
+```
+
 ---
 
 ## 2. Why the Vulnerability Is Dangerous
@@ -85,6 +88,8 @@ The fixed query uses a placeholder:
 ```javascript
 const query = "SELECT id, name FROM products WHERE name LIKE ?";
 const rows = await db.query(query, [`%${safeTerm}%`]);
+```
+
 ---
 
 ## 4. Remaining Limitation
@@ -100,17 +105,35 @@ coding practices, application testing, or other security controls.
 
 A clean scanner result therefore does not prove that an application is
 completely secure.
+
 ---
 
 ## 5. Local Verification
 
-### Vulnerable Fixture
+### Reproduce the Failed Scan (Vulnerable Fixture)
 
 Run:
 
 ```bash
 python3 tools/vulnerability_scanner.py training-fixtures/vulnerable.js
 printf 'vulnerable_exit=%s\n' "$?"
+```
+
+Expected result: one or more `[HIGH]` findings are printed and the
+exit code is `1`. This is captured in `evidence/local-failed-scan.png`.
+
+### Reproduce the Successful Scan (Fixed Fixture)
+
+Run:
+
+```bash
+python3 tools/vulnerability_scanner.py training-fixtures/fixed.js
+printf 'fixed_exit=%s\n' "$?"
+```
+
+Expected result: `No findings.` is printed and the exit code is `0`.
+This is captured in `evidence/local-passed-scan.png`.
+
 ---
 
 ## 6. Additional Scanner Rules
@@ -134,6 +157,7 @@ The reviewed scanner is:
 `tools/vulnerability_scanner.py`
 
 The additional rules were tested using the classroom training fixtures.
+
 ---
 
 ## 7. GitHub Actions Security Gate
@@ -152,6 +176,20 @@ The workflow executes the vulnerability scanner without
 
 A non-zero scanner exit code therefore causes the GitHub Actions job
 to fail.
+
+### Reproduce the Failed Pipeline
+
+Point the workflow's scanner step at `training-fixtures/vulnerable.js`
+and push the change (or open a pull request). The `Run vulnerability
+scanner` step reports the `HIGH` findings, exits non-zero, and the job
+is marked failed in the Actions tab.
+
+### Reproduce the Successful Pipeline
+
+Point the workflow's scanner step at `training-fixtures/fixed.js`
+(the current, committed configuration) and push the change. The step
+prints `No findings.`, exits `0`, and the job is marked successful in
+the Actions tab.
 
 Pipeline evidence:
 
@@ -188,9 +226,6 @@ verification methods, and evidence.
 The peer-review record documents the review scope, feedback, actions,
 and resulting security improvements.
 
-The final reviewer identity and any additional feedback will be
-completed after the actual peer review.
-
 ---
 
 ## 9. Secret Hygiene
@@ -224,12 +259,24 @@ The evidence is stored in:
 
 ---
 
-## 10. Reproduction Steps
-
-### Check Scanner Syntax
+## 10. Reproduction Steps Summary
 
 ```bash
+# Check scanner syntax
 python3 -m py_compile tools/vulnerability_scanner.py
+
+# Local failed scan
+python3 tools/vulnerability_scanner.py training-fixtures/vulnerable.js
+echo $?
+
+# Local passed scan
+python3 tools/vulnerability_scanner.py training-fixtures/fixed.js
+echo $?
+```
+
+GitHub Actions reproduction is described in Section 7 above and shown
+in `evidence/failed-pipeline.png` and `evidence/passed-pipeline.png`.
+
 ---
 
 ## 11. Evidence
@@ -245,6 +292,14 @@ The repository contains evidence for:
 The evidence demonstrates the complete workflow:
 
 > Detect → Fix → Verify → Enforce → Document
+
+| Evidence file | What it shows |
+|---|---|
+| `evidence/local-failed-scan.png` | Local scan of `vulnerable.js`: HIGH findings, exit code 1 |
+| `evidence/local-passed-scan.png` | Local scan of `fixed.js`: no findings, exit code 0 |
+| `evidence/failed-pipeline.png` | GitHub Actions run failing on the vulnerable fixture |
+| `evidence/passed-pipeline.png` | GitHub Actions run passing on the fixed fixture |
+| `evidence/secret-hygiene-check.md` | Secret-scan results before submission |
 
 ---
 
