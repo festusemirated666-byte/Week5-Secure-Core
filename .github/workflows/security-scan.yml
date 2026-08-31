@@ -29,7 +29,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p artifacts
-          python3 tools/vulnerability_scanner.py training-fixtures/fixed.js \
+          python3 tools/vulnerability_scanner.py training-fixtures/vulnerable.js \
             | tee artifacts/medusa-ci-scan-findings.txt
 
       - name: Upload scanner findings
